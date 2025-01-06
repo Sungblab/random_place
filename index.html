@@ -762,6 +762,19 @@
         color: white;
       }
 
+      .share-button.instagram {
+        background: linear-gradient(
+          45deg,
+          #405de6,
+          #5851db,
+          #833ab4,
+          #c13584,
+          #e1306c,
+          #fd1d1d
+        );
+        color: white;
+      }
+
       @media (max-width: 600px) {
         .social-share {
           flex-direction: column;
@@ -809,6 +822,9 @@
           </button>
           <button onclick="shareFacebook()" class="share-button facebook">
             페이스북 공유
+          </button>
+          <button onclick="copyUrlForInsta()" class="share-button instagram">
+            인스타용 URL 복사
           </button>
         </div>
         <div class="places-info" style="margin-top: 2rem">
@@ -1277,30 +1293,35 @@
       // 카카오톡 초기화
       Kakao.init("afd2012e664a6c57d7dcee6ddef8712a");
 
-      function shareKakao() {
+      async function shareKakao() {
         const location =
           document.getElementById("selected-location").textContent;
-        Kakao.Link.sendDefault({
-          objectType: "feed",
-          content: {
-            title: "🎲 랜덤 여행 지도 룰렛",
-            description: `제가 뽑은 다음 여행지는 ${location} 어떠신가요?`,
-            imageUrl: "https://tripgacha.netlify.app/og-image.jpg",
-            link: {
-              mobileWebUrl: "https://tripgacha.netlify.app",
-              webUrl: "https://tripgacha.netlify.app",
-            },
-          },
-          buttons: [
-            {
-              title: "나도 여행지 뽑기",
+        try {
+          await Kakao.Share.sendDefault({
+            objectType: "feed",
+            content: {
+              title: "🎲 랜덤 여행 지도 룰렛",
+              description: `제가 뽑은 다음 여행지는 ${location} 어떠신가요?`,
+              imageUrl: "https://tripgacha.netlify.app/og-image.png",
               link: {
                 mobileWebUrl: "https://tripgacha.netlify.app",
                 webUrl: "https://tripgacha.netlify.app",
               },
             },
-          ],
-        });
+            buttons: [
+              {
+                title: "나도 여행지 뽑기",
+                link: {
+                  mobileWebUrl: "https://tripgacha.netlify.app",
+                  webUrl: "https://tripgacha.netlify.app",
+                },
+              },
+            ],
+          });
+        } catch (error) {
+          console.error("카카오톡 공유 실패:", error);
+          alert("카카오톡 공유에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        }
       }
 
       function shareTwitter() {
@@ -1322,6 +1343,24 @@
             url
           )}`
         );
+      }
+
+      function copyUrlForInsta() {
+        const url = "https://tripgacha.netlify.app";
+        const text = `🎲 랜덤 여행 지도 룰렛으로 뽑은 제 다음 여행지는 ${
+          document.getElementById("selected-location").textContent
+        }\n나도 여행지 뽑으러 가기 👉`;
+
+        const tempInput = document.createElement("input");
+        tempInput.value = url;
+        document.body.appendChild(tempInput);
+
+        tempInput.select();
+        document.execCommand("copy");
+
+        document.body.removeChild(tempInput);
+
+        alert("인스타용 URL이 복사되었습니다!");
       }
     </script>
   </body>
