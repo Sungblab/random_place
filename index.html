@@ -3,7 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>랜덤 여행 지도 룰렛</title>
+    <!-- Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-XXXXXXXXXX");
+    </script>
+    <title>랜덤 여행 지도 룰렛 - 당신의 다음 여행지를 발견하세요</title>
+    <meta
+      name="description"
+      content="랜덤 여행 지도 룰렛으로 당신의 다음 여행지를 발견하세요. 국내 여행지 추천, 주변 관광지, 맛집, 숙박시설 정보를 한 번에 확인할 수 있습니다."
+    />
+    <meta
+      name="keywords"
+      content="랜덤여행,여행지추천,국내여행,여행룰렛,여행지선택,관광지추천,맛집추천,여행계획"
+    />
+    <meta name="author" content="랜덤 여행 지도 룰렛" />
+    <meta
+      property="og:title"
+      content="랜덤 여행 지도 룰렛 - 당신의 다음 여행지를 발견하세요"
+    />
+    <meta
+      property="og:description"
+      content="랜덤 여행 지도 룰렛으로 당신의 다음 여행지를 발견하세요. 국내 여행지 추천, 주변 관광지, 맛집, 숙박시설 정보를 한 번에 확인할 수 있습니다."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tripgacha.netlify.app/" />
+    <meta
+      property="og:image"
+      content="https://tripgacha.netlify.app/og-image.png"
+    />
+    <link rel="canonical" href="https://tripgacha.netlify.app/" />
     <link
       href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
@@ -12,6 +49,7 @@
       type="text/javascript"
       src="//dapi.kakao.com/v2/maps/sdk.js?appkey=afd2012e664a6c57d7dcee6ddef8712a&libraries=services"
     ></script>
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
     <style>
       * {
         margin: 0;
@@ -683,6 +721,59 @@
           display: block;
         }
       }
+
+      .social-share {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .share-button {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .share-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .share-button.kakao {
+        background: #fee500;
+        color: #000000;
+      }
+
+      .share-button.twitter {
+        background: #1da1f2;
+        color: white;
+      }
+
+      .share-button.facebook {
+        background: #4267b2;
+        color: white;
+      }
+
+      @media (max-width: 600px) {
+        .social-share {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .share-button {
+          width: 100%;
+          max-width: 250px;
+          justify-content: center;
+        }
+      }
     </style>
   </head>
   <body>
@@ -709,6 +800,17 @@
       <div class="result">
         <h2>🎉 당신의 다음 여행지</h2>
         <p id="selected-location"></p>
+        <div class="social-share">
+          <button onclick="shareKakao()" class="share-button kakao">
+            카카오톡 공유
+          </button>
+          <button onclick="shareTwitter()" class="share-button twitter">
+            트위터 공유
+          </button>
+          <button onclick="shareFacebook()" class="share-button facebook">
+            페이스북 공유
+          </button>
+        </div>
         <div class="places-info" style="margin-top: 2rem">
           <div class="category-tabs">
             <button class="tab-button active" data-category="tourist">
@@ -1171,6 +1273,56 @@
           });
         });
       });
+
+      // 카카오톡 초기화
+      Kakao.init("afd2012e664a6c57d7dcee6ddef8712a");
+
+      function shareKakao() {
+        const location =
+          document.getElementById("selected-location").textContent;
+        Kakao.Link.sendDefault({
+          objectType: "feed",
+          content: {
+            title: "🎲 랜덤 여행 지도 룰렛",
+            description: `제가 뽑은 다음 여행지는 ${location} 어떠신가요?`,
+            imageUrl: "https://tripgacha.netlify.app/og-image.jpg",
+            link: {
+              mobileWebUrl: "https://tripgacha.netlify.app",
+              webUrl: "https://tripgacha.netlify.app",
+            },
+          },
+          buttons: [
+            {
+              title: "나도 여행지 뽑기",
+              link: {
+                mobileWebUrl: "https://tripgacha.netlify.app",
+                webUrl: "https://tripgacha.netlify.app",
+              },
+            },
+          ],
+        });
+      }
+
+      function shareTwitter() {
+        const location =
+          document.getElementById("selected-location").textContent;
+        const text = `🎲 랜덤 여행 지도 룰렛으로 뽑은 제 다음 여행지는 ${location}\n나도 여행지 뽑으러 가기 👉`;
+        const url = "https://tripgacha.netlify.app";
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+            text
+          )}&url=${encodeURIComponent(url)}`
+        );
+      }
+
+      function shareFacebook() {
+        const url = "https://tripgacha.netlify.app";
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            url
+          )}`
+        );
+      }
     </script>
   </body>
 </html>
