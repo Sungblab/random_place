@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>랜덤 여행 지도 룰렛</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Playfair+Display:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      type="text/javascript"
+      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=afd2012e664a6c57d7dcee6ddef8712a&libraries=services"
+    ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Noto Serif KR", serif;
+      }
+
+      body {
+        background: #1a1a1a;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #d4af37;
+        background-image: linear-gradient(45deg, #000000 25%, transparent 25%),
+          linear-gradient(-45deg, #000000 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #000000 75%),
+          linear-gradient(-45deg, transparent 75%, #000000 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 2rem;
+        text-align: center;
+        background: rgba(26, 26, 26, 0.95);
+        border: 2px solid #d4af37;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+      }
+
+      .game-info {
+        background: rgba(212, 175, 55, 0.1);
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+
+      .timer {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        color: #d4af37;
+        margin: 1rem 0;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+      }
+
+      h1 {
+        font-family: "Playfair Display", "Noto Serif KR", serif;
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        color: #d4af37;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+      }
+
+      #map {
+        width: 800px;
+        height: 600px;
+        border-radius: 15px;
+        border: 3px solid #d4af37;
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        margin: 2rem auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .button {
+        background: #d4af37;
+        color: #1a1a1a;
+        border: none;
+        padding: 1rem 3rem;
+        font-size: 1.2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+      }
+
+      .button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+        background: #e5c144;
+      }
+
+      .button.start {
+        background: linear-gradient(45deg, #d4af37, #e5c144);
+      }
+
+      .button.stop {
+        background: linear-gradient(45deg, #c41e3a, #ff0000);
+        color: white;
+      }
+
+      .result {
+        background: rgba(26, 26, 26, 0.95);
+        border: 2px solid #d4af37;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-top: 2rem;
+      }
+
+      .roulette-pointer {
+        width: 40px;
+        height: 40px;
+        filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+      }
+
+      .roulette-pointer.spinning {
+        animation: pointerPulse 0.5s infinite alternate;
+        filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.8));
+      }
+
+      @keyframes pointerPulse {
+        from {
+          transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        }
+        to {
+          transform: translate(-50%, -50%) scale(1.3) rotate(180deg);
+        }
+      }
+
+      /* 게임 상태 표시 UI */
+      .game-status {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .status-item {
+        text-align: center;
+      }
+
+      .status-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+      }
+
+      .status-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+      }
+
+      .target-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .target-distance {
+        background: #ff6b6b;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+      }
+
+      .combo-counter {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4rem;
+        font-weight: bold;
+        color: #ff6b6b;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1001;
+      }
+
+      .combo-animation {
+        animation: comboPopup 1s ease-out;
+      }
+
+      @keyframes comboPopup {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      /* 목표 지점 마커 스타일 */
+      .target-marker {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .target-marker::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 3px solid #ff6b6b;
+        border-radius: 50%;
+        animation: targetPulse 2s infinite;
+      }
+
+      @keyframes targetPulse {
+        0% {
+          transform: scale(0.5);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      .button-group {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      @media (max-width: 850px) {
+        .button-group {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .button {
+          width: 100%;
+          max-width: 300px;
+        }
+      }
+
+      .loading {
+        display: none;
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #ff6b6b;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 1rem auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* 모바일 반응형 스타일 */
+      @media (max-width: 850px) {
+        .container {
+          padding: 1rem;
+          margin: 1rem auto;
+        }
+
+        #map {
+          width: 100%;
+          height: 400px;
+        }
+
+        h1 {
+          font-size: 1.8rem;
+        }
+
+        .button {
+          padding: 0.8rem 1.5rem;
+          font-size: 1rem;
+        }
+      }
+
+      /* 다트 스타일 개선 */
+      .dart-container {
+        position: fixed;
+        left: 50%;
+        bottom: 100px;
+        transform: translateX(-50%);
+        width: 60px;
+        height: 60px;
+        z-index: 1000;
+        cursor: grab;
+        transition: transform 0.2s;
+      }
+
+      .dart-container:active {
+        cursor: grabbing;
+        transform: translateX(-50%) scale(1.1);
+      }
+
+      .dart {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234a90e2" d="M7,2H17L13.5,9H17L10,22L12,14H8L12,2M10,4L8,10H12L10,18L14,9H11L13,4H10Z"/></svg>');
+        background-size: contain;
+        filter: drop-shadow(3px 3px 5px rgba(0, 0, 0, 0.3));
+      }
+
+      .dart-container.dragging {
+        transition: none;
+      }
+
+      .dart-trajectory {
+        position: absolute;
+        width: 2px;
+        height: 0;
+        background: rgba(255, 107, 107, 0.5);
+        transform-origin: bottom;
+        pointer-events: none;
+      }
+
+      .power-meter {
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .power-meter-fill {
+        height: 100%;
+        width: 0%;
+        background: #ff6b6b;
+        transition: width 0.1s;
+      }
+
+      .dart-container.charging .power-meter {
+        opacity: 1;
+      }
+
+      /* 지도 클릭 효과 */
+      #map {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .map-ripple {
+        position: absolute;
+        border: 2px solid #ff6b6b;
+        border-radius: 50%;
+        animation: ripple 1s linear;
+        pointer-events: none;
+      }
+
+      @keyframes ripple {
+        0% {
+          width: 0;
+          height: 0;
+          opacity: 0.5;
+        }
+        100% {
+          width: 100px;
+          height: 100px;
+          opacity: 0;
+          transform: translate(-50%, -50%);
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      /* 궤적 효과 */
+      .trajectory {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 999;
+      }
+
+      .trajectory-line {
+        position: absolute;
+        height: 2px;
+        background: rgba(74, 144, 226, 0.3);
+        transform-origin: left center;
+      }
+
+      /* 꽂히는 효과 */
+      .impact-marker {
+        position: absolute;
+        width: 20px;
+        height: 40px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234a90e2" d="M7,2H17L13.5,9H17L10,22L12,14H8L12,2M10,4L8,10H12L10,18L14,9H11L13,4H10Z"/></svg>');
+        background-size: contain;
+        transform: translate(-50%, -50%) rotate(45deg);
+        animation: impactAnimation 0.3s ease-out;
+      }
+
+      @keyframes impactAnimation {
+        0% {
+          transform: translate(-50%, -50%) rotate(45deg) scale(2);
+          opacity: 0;
+        }
+        50% {
+          transform: translate(-50%, -50%) rotate(45deg) scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(45deg) scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* 잉크 번짐 효과 */
+      .ink-splash {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+
+      .ink-splash::before {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: rgba(74, 144, 226, 0.3);
+        border-radius: 50%;
+        animation: inkSplash 1s ease-out forwards;
+      }
+
+      @keyframes inkSplash {
+        0% {
+          transform: scale(0);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(3);
+          opacity: 0;
+        }
+      }
+
+      /* 룰렛 포인터 스타일 */
+      .roulette-pointer {
+        position: absolute;
+        width: 30px;
+        height: 30px;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23ff6b6b" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>');
+        background-size: contain;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        transition: all 0.1s ease-out;
+      }
+
+      .roulette-pointer.spinning {
+        animation: pointerPulse 0.5s infinite alternate;
+      }
+
+      @keyframes pointerPulse {
+        from {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        to {
+          transform: translate(-50%, -50%) scale(1.3);
+        }
+      }
+
+      .button.start {
+        background: #4caf50;
+      }
+
+      .button.stop {
+        background: #f44336;
+        display: none;
+      }
+
+      /* 결과 표시 애니메이션 */
+      .result.show {
+        animation: slideUp 0.5s ease-out forwards;
+      }
+
+      @keyframes slideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* 카테고리 탭 스타일 */
+      .category-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .tab-button {
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid #d4af37;
+        color: #d4af37;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .tab-button:hover {
+        background: rgba(212, 175, 55, 0.2);
+      }
+
+      .tab-button.active {
+        background: #d4af37;
+        color: #1a1a1a;
+      }
+
+      .place-card {
+        background: rgba(255, 255, 255, 0.1);
+        margin: 0.5rem 0;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .place-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+      }
+
+      .place-name {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+      }
+
+      .place-info {
+        font-size: 0.9rem;
+        color: rgba(212, 175, 55, 0.8);
+      }
+
+      .place-link {
+        display: inline-block;
+        margin-top: 0.5rem;
+        color: #4a90e2;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .place-link:hover {
+        text-decoration: underline;
+      }
+
+      /* 푸터 스타일 */
+      .footer {
+        width: 100%;
+        max-width: 1200px;
+        margin: 3rem auto 0;
+        padding: 2rem;
+        background: rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(212, 175, 55, 0.2);
+        border-radius: 15px;
+        text-align: center;
+      }
+
+      .footer-content {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+
+      .footer-text {
+        color: rgba(212, 175, 55, 0.7);
+        font-size: 0.9rem;
+        line-height: 1.6;
+      }
+
+      .footer-links {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+      }
+
+      .footer-link {
+        color: #d4af37;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: color 0.3s ease;
+      }
+
+      .footer-link:hover {
+        color: #e5c144;
+      }
+
+      .footer-divider {
+        margin: 1rem 0;
+        border: none;
+        border-top: 1px solid rgba(212, 175, 55, 0.1);
+      }
+
+      .copyright {
+        color: rgba(212, 175, 55, 0.5);
+        font-size: 0.8rem;
+      }
+
+      @media (max-width: 850px) {
+        .footer {
+          margin: 2rem 1rem;
+          width: calc(100% - 2rem);
+          padding: 1.5rem 1rem;
+        }
+
+        .footer-links {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .footer-link {
+          padding: 0.5rem;
+          border: 1px solid rgba(212, 175, 55, 0.2);
+          border-radius: 8px;
+          width: 100%;
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="fade-in">✨ 랜덤 여행 지도 룰렛 ✨</h1>
+      <div class="game-info">
+        <p>당신의 다음 여행지를 운명의 룰렛이 결정합니다!</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.8">
+          룰렛이 멈추는 곳이 당신의 다음 여행지가 됩니다.<br />
+          10초 안에 멈추기 버튼을 누르지 않으면 자동으로 멈춥니다.
+        </p>
+      </div>
+      <div class="timer" id="timer">10:00</div>
+      <div id="map">
+        <div class="roulette-pointer"></div>
+      </div>
+      <div class="loading"></div>
+      <div class="button-group">
+        <button class="button start" onclick="startRoulette()">
+          운명의 룰렛 시작
+        </button>
+        <button class="button stop" onclick="stopRoulette()">멈추기</button>
+      </div>
+      <div class="result">
+        <h2>🎉 당신의 다음 여행지</h2>
+        <p id="selected-location"></p>
+        <div class="places-info" style="margin-top: 2rem">
+          <div class="category-tabs">
+            <button class="tab-button active" data-category="tourist">
+              🏰 관광지
+            </button>
+            <button class="tab-button" data-category="food">🍽️ 맛집</button>
+            <button class="tab-button" data-category="accommodation">
+              🏨 숙박
+            </button>
+            <button class="tab-button" data-category="culture">
+              🎭 문화시설
+            </button>
+          </div>
+          <div
+            id="places-list"
+            style="max-height: 300px; overflow-y: auto"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <p class="footer-text">
+          랜덤 여행 지도 룰렛으로 당신의 다음 여행지를 발견하세요.<br />
+          새로운 모험이 기다리고 있습니다!
+        </p>
+        <div class="footer-links">
+          <a
+            href="https://sungblab.vercel.app/"
+            target="_blank"
+            class="footer-link"
+            >개발자 블로그 가기 →</a
+          >
+        </div>
+        <hr class="footer-divider" />
+        <p class="copyright">
+          © 2024 랜덤 여행 지도 룰렛. All rights reserved.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      // 전역 변수 선언
+      let isSpinning = false;
+      let rouletteInterval;
+      let autoStopTimeout;
+      const pointer = document.querySelector(".roulette-pointer");
+      const startButton = document.querySelector(".button.start");
+      const stopButton = document.querySelector(".button.stop");
+
+      // 대한민국 영역 좌표
+      const KOREA_BOUNDS = {
+        sw: { lat: 33.0, lng: 125.7 }, // 남서쪽 끝 (제주도 포함)
+        ne: { lat: 38.0, lng: 129.5 }, // 북동쪽 끝 (강원도 포함)
+      };
+
+      // 내륙 지역 좌표 (대략적인 육지 영역)
+      const INLAND_REGIONS = [
+        {
+          // 경기도
+          sw: { lat: 36.8, lng: 126.8 },
+          ne: { lat: 38.3, lng: 127.8 },
+        },
+        {
+          // 강원도
+          sw: { lat: 37.0, lng: 127.5 },
+          ne: { lat: 38.5, lng: 129.0 },
+        },
+        {
+          // 충청도
+          sw: { lat: 35.9, lng: 126.4 },
+          ne: { lat: 37.2, lng: 128.5 },
+        },
+        {
+          // 전라도
+          sw: { lat: 34.3, lng: 126.1 },
+          ne: { lat: 36.0, lng: 127.9 },
+        },
+        {
+          // 경상도
+          sw: { lat: 34.8, lng: 127.5 },
+          ne: { lat: 37.0, lng: 129.4 },
+        },
+      ];
+
+      function getRandomInlandPoint() {
+        // 랜덤하게 지역 선택
+        const region =
+          INLAND_REGIONS[Math.floor(Math.random() * INLAND_REGIONS.length)];
+
+        // 선택된 지역 내에서 랜덤 좌표 생성
+        const lat =
+          region.sw.lat + Math.random() * (region.ne.lat - region.sw.lat);
+        const lng =
+          region.sw.lng + Math.random() * (region.ne.lng - region.sw.lng);
+
+        return { lat, lng };
+      }
+
+      // 지도 초기화
+      let map = new kakao.maps.Map(document.getElementById("map"), {
+        center: new kakao.maps.LatLng(36.2683, 127.6358),
+        level: 13,
+      });
+
+      let marker = new kakao.maps.Marker();
+      let geocoder = new kakao.maps.services.Geocoder();
+
+      function resetGame() {
+        // 결과창 숨기기
+        document.querySelector(".result").style.display = "none";
+        document.querySelector(".result").classList.remove("show");
+
+        // 마커 제거
+        if (marker) marker.setMap(null);
+
+        // 지도 초기 위치로
+        map.setCenter(new kakao.maps.LatLng(36.2683, 127.6358));
+        map.setLevel(13);
+
+        // 포인터 초기화
+        pointer.style.left = "50%";
+        pointer.style.top = "50%";
+        pointer.classList.remove("spinning");
+      }
+
+      // 초기화
+      resetGame();
+
+      // 타이머 관련 변수와 함수 추가
+      let timerInterval;
+      const timerDisplay = document.getElementById("timer");
+
+      function updateTimer(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        timerDisplay.textContent = `${secs < 10 ? "0" : ""}${secs}`;
+      }
+
+      function startTimer() {
+        let timeLeft = 10; // 10초
+        updateTimer(timeLeft);
+        timerDisplay.style.display = "block";
+
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          updateTimer(timeLeft);
+
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            if (isSpinning) stopRoulette();
+          }
+        }, 1000);
+      }
+
+      function stopTimer() {
+        clearInterval(timerInterval);
+        timerDisplay.style.display = "none";
+      }
+
+      function startRoulette() {
+        if (isSpinning) return;
+
+        // UI 초기화
+        resetGame();
+        isSpinning = true;
+        startButton.style.display = "none";
+        stopButton.style.display = "inline-block";
+        pointer.classList.add("spinning");
+
+        // 타이머 시작
+        startTimer();
+
+        // 포인터 이동 시작
+        let speed = 100;
+        rouletteInterval = setInterval(movePointer, speed);
+
+        // 10초 후 자동 정지
+        autoStopTimeout = setTimeout(() => {
+          if (isSpinning) stopRoulette();
+        }, 10000);
+      }
+
+      function movePointer() {
+        const mapNode = map.getNode();
+        const mapRect = mapNode.getBoundingClientRect();
+        const inlandPoint = getRandomInlandPoint();
+
+        // 지도의 현재 중심점과 레벨을 기준으로 좌표 계산
+        const position = new kakao.maps.LatLng(
+          inlandPoint.lat,
+          inlandPoint.lng
+        );
+        const projection = map.getProjection();
+        const point = projection.pointFromCoords(position);
+
+        // 지도 영역 내에 포인터가 위치하도록 제한
+        const padding = 20; // 여백
+        const x = Math.min(Math.max(point.x, padding), mapRect.width - padding);
+        const y = Math.min(
+          Math.max(point.y, padding),
+          mapRect.height - padding
+        );
+
+        pointer.style.left = x + "px";
+        pointer.style.top = y + "px";
+      }
+
+      async function stopRoulette() {
+        if (!isSpinning) return;
+
+        clearInterval(rouletteInterval);
+        clearTimeout(autoStopTimeout);
+        stopTimer();
+        isSpinning = false;
+        pointer.classList.remove("spinning");
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
+
+        try {
+          const pointerRect = pointer.getBoundingClientRect();
+          const mapNode = map.getNode();
+          const mapRect = mapNode.getBoundingClientRect();
+
+          const projection = map.getProjection();
+          const point = new kakao.maps.Point(
+            pointerRect.left - mapRect.left + pointerRect.width / 2,
+            pointerRect.top - mapRect.top + pointerRect.height / 2
+          );
+          const position = projection.coordsFromPoint(point);
+
+          await new Promise((resolve) => {
+            geocoder.coord2Address(
+              position.getLng(),
+              position.getLat(),
+              async (result, status) => {
+                if (
+                  status === kakao.maps.services.Status.OK &&
+                  result[0]?.address
+                ) {
+                  const region = result[0].address.region_1depth_name;
+                  if (region && !region.includes("북한")) {
+                    const moveLatLon = new kakao.maps.LatLng(
+                      position.getLat(),
+                      position.getLng()
+                    );
+
+                    map.panTo(moveLatLon);
+
+                    marker.setMap(null);
+                    marker = new kakao.maps.Marker({
+                      position: moveLatLon,
+                      map: map,
+                    });
+
+                    const address = result[0].address;
+                    const locationText = `${address.region_1depth_name} ${
+                      address.region_2depth_name
+                    } ${address.region_3depth_name || ""}으로 떠나보세요!`;
+                    document.getElementById("selected-location").textContent =
+                      locationText;
+
+                    // 주기 관광지 정보 로드
+                    const places = await getNearbyPlaces(
+                      position.getLat(),
+                      position.getLng(),
+                      "tourist"
+                    );
+                    updatePlacesList(places);
+
+                    const resultDiv = document.querySelector(".result");
+                    resultDiv.style.display = "block";
+                    resultDiv.classList.add("show");
+                  } else {
+                    throw new Error("유효하지 않은 위치입니다.");
+                  }
+                } else {
+                  throw new Error("주소를 찾을 수 없습니다.");
+                }
+                resolve();
+              }
+            );
+          });
+        } catch (error) {
+          console.error("Error:", error);
+          alert("다시 시도해주세요!");
+          resetGame();
+        }
+      }
+
+      function updatePlacesList(places) {
+        const placesList = document.getElementById("places-list");
+        if (places.length > 0) {
+          const placesHtml = places
+            .map(
+              (place) => `
+                <div class="place-card">
+                  <div class="place-name">${place.place_name}</div>
+                  <div class="place-info">
+                    <p>📍 ${place.address_name}</p>
+                    ${place.phone ? `<p>📞 ${place.phone}</p>` : ""}
+                    ${
+                      place.category_name
+                        ? `<p>🏷️ ${place.category_name}</p>`
+                        : ""
+                    }
+                    ${
+                      place.distance
+                        ? `<p>🚶‍♂️ ${(place.distance / 1000).toFixed(1)}km</p>`
+                        : ""
+                    }
+                  </div>
+                  ${
+                    place.place_url
+                      ? `<a href="${place.place_url}" target="_blank" class="place-link">상세정보 보기 →</a>`
+                      : ""
+                  }
+                </div>
+              `
+            )
+            .join("");
+          placesList.innerHTML = placesHtml;
+        } else {
+          placesList.innerHTML = "<p>주변 정보가 없습니다.</p>";
+        }
+      }
+
+      function getRandomCoordinate() {
+        const lat =
+          KOREA_BOUNDS.sw.lat +
+          Math.random() * (KOREA_BOUNDS.ne.lat - KOREA_BOUNDS.sw.lat);
+        const lng =
+          KOREA_BOUNDS.sw.lng +
+          Math.random() * (KOREA_BOUNDS.ne.lng - KOREA_BOUNDS.sw.lng);
+        return { lat, lng };
+      }
+
+      function checkValidLocation(result, status) {
+        return new Promise((resolve) => {
+          if (status === kakao.maps.services.Status.OK) {
+            // 한국 지역인지 확인
+            const isKorea = result[0].address.region_1depth_name !== "";
+            resolve(isKorea ? result[0] : null);
+          } else {
+            resolve(null);
+          }
+        });
+      }
+
+      async function findValidLocation() {
+        let location = null;
+        let attempts = 0;
+        const maxAttempts = 20; // 최대 시도 횟수 증가
+
+        while (!location && attempts < maxAttempts) {
+          const coords = getRandomCoordinate();
+          await new Promise((resolve) => {
+            geocoder.coord2Address(
+              coords.lng,
+              coords.lat,
+              async (result, status) => {
+                if (
+                  status === kakao.maps.services.Status.OK &&
+                  result[0]?.address
+                ) {
+                  // 바다나 북한 지역 제외
+                  const region = result[0].address.region_1depth_name;
+                  if (region && !region.includes("북한")) {
+                    location = {
+                      coords,
+                      address: result[0].address,
+                    };
+                  }
+                }
+                resolve();
+              }
+            );
+          });
+          attempts++;
+        }
+        return location;
+      }
+
+      // 주변 관광지 정보 가져오기
+      function getNearbyPlaces(lat, lng, category) {
+        const places = new kakao.maps.services.Places();
+        const searchKeywords = {
+          tourist: "관광지",
+          food: "맛집",
+          accommodation: "숙박",
+          culture: "문화시설",
+        };
+
+        return new Promise((resolve) => {
+          places.keywordSearch(
+            searchKeywords[category],
+            (result, status) => {
+              if (status === kakao.maps.services.Status.OK) {
+                resolve(result.slice(0, 8)); // 상위 8개 표시
+              } else {
+                resolve([]);
+              }
+            },
+            {
+              location: new kakao.maps.LatLng(lat, lng),
+              radius: 5000, // 5km 반경
+              sort: kakao.maps.services.SortBy.DISTANCE,
+            }
+          );
+        });
+      }
+
+      // 지도 클릭 효과
+      document.getElementById("map").addEventListener("click", function (e) {
+        const ripple = document.createElement("div");
+        ripple.className = "map-ripple";
+        ripple.style.left = e.offsetX + "px";
+        ripple.style.top = e.offsetY + "px";
+        this.appendChild(ripple);
+
+        setTimeout(() => {
+          ripple.remove();
+        }, 1000);
+      });
+
+      // 모바일 터치 이벤트 처리
+      document.addEventListener("touchstart", function (e) {
+        if (e.target.classList.contains("button")) {
+          e.preventDefault();
+          selectRandomLocation();
+        }
+      });
+
+      // 탭 클릭 이벤트 처리
+      document.addEventListener("DOMContentLoaded", function () {
+        const tabButtons = document.querySelectorAll(".tab-button");
+        let currentLat, currentLng;
+
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", async function () {
+            // 활성 탭 변경
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            this.classList.add("active");
+
+            // 현재 마커 위치 가져오기
+            if (marker && marker.getPosition()) {
+              currentLat = marker.getPosition().getLat();
+              currentLng = marker.getPosition().getLng();
+
+              // 선택된 카테고리의 장소 검색
+              const category = this.dataset.category;
+              const places = await getNearbyPlaces(
+                currentLat,
+                currentLng,
+                category
+              );
+              updatePlacesList(places);
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
