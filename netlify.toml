@@ -4,8 +4,10 @@
 [build.environment]
   NODE_VERSION = "18"
 
-[context.production.environment]
-  KAKAO_APP_KEY = "production_key_here"
+[[redirects]]
+  from = "/config.js"
+  to = "/.netlify/functions/config"
+  status = 200
 
-[context.deploy-preview.environment]
-  KAKAO_APP_KEY = "preview_key_here" 
+[functions]
+  directory = "functions" 

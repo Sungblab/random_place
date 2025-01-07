@@ -32,9 +32,10 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
       rel="stylesheet"
     />
+    <script src="/config.js"></script>
     <script>
       // 환경변수에서 API 키 가져오기
-      const KAKAO_APP_KEY = process.env.KAKAO_APP_KEY || "";
+      const KAKAO_APP_KEY = window.ENV.KAKAO_APP_KEY;
       // API 키로 스크립트 동적 로드
       const kakaoMapScript = document.createElement("script");
       kakaoMapScript.type = "text/javascript";
@@ -1380,7 +1381,7 @@
       });
 
       // 카카오톡 초기화
-      Kakao.init("KAKAO_APP_KEY");
+      Kakao.init(window.ENV.KAKAO_APP_KEY);
 
       async function shareKakao() {
         const location =
