@@ -2,12 +2,4 @@
   publish = "."
 
 [build.environment]
-  NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/config.js"
-  to = "/.netlify/functions/config"
-  status = 200
-
-[functions]
-  directory = "functions" 
+  NODE_VERSION = "18" 
