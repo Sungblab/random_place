@@ -1,0 +1,11 @@
+[build]
+  publish = "."
+
+[build.environment]
+  NODE_VERSION = "18"
+
+[context.production.environment]
+  KAKAO_APP_KEY = "production_key_here"
+
+[context.deploy-preview.environment]
+  KAKAO_APP_KEY = "preview_key_here" 

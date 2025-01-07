@@ -3,19 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Google Analytics -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-      gtag("config", "G-XXXXXXXXXX");
-    </script>
     <title>랜덤 여행 지도 룰렛 - 당신의 다음 여행지를 발견하세요</title>
     <meta
       name="description"
@@ -45,10 +32,15 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
       rel="stylesheet"
     />
-    <script
-      type="text/javascript"
-      src="//dapi.kakao.com/v2/maps/sdk.js?appkey=afd2012e664a6c57d7dcee6ddef8712a&libraries=services"
-    ></script>
+    <script>
+      // 환경변수에서 API 키 가져오기
+      const KAKAO_APP_KEY = process.env.KAKAO_APP_KEY || "";
+      // API 키로 스크립트 동적 로드
+      const kakaoMapScript = document.createElement("script");
+      kakaoMapScript.type = "text/javascript";
+      kakaoMapScript.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_APP_KEY}&libraries=services`;
+      document.head.appendChild(kakaoMapScript);
+    </script>
     <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
     <style>
       * {
@@ -1388,7 +1380,7 @@
       });
 
       // 카카오톡 초기화
-      Kakao.init("afd2012e664a6c57d7dcee6ddef8712a");
+      Kakao.init("KAKAO_APP_KEY");
 
       async function shareKakao() {
         const location =
