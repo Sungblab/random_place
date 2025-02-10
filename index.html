@@ -1014,8 +1014,8 @@
 
       // 지도 초기화
       let map = new kakao.maps.Map(document.getElementById("map"), {
-        center: new kakao.maps.LatLng(36.2683, 127.6358),
-        level: 13,
+        center: new kakao.maps.LatLng(36.2683, 127.6358), // 한반도 중심 좌표
+        level: isMobile() ? 14 : 13 // 모바일일 경우 더 넓게 보이도록 설정
       });
 
       let marker = new kakao.maps.Marker();
@@ -1029,9 +1029,9 @@
         // 마커 제거
         if (marker) marker.setMap(null);
 
-        // 지도 초기 위치로
+        // 지도 초기 위치로 (모바일 대응)
         map.setCenter(new kakao.maps.LatLng(36.2683, 127.6358));
-        map.setLevel(13);
+        map.setLevel(isMobile() ? 14 : 13);
 
         // 포인터 초기화
         pointer.style.left = "50%";
@@ -1446,6 +1446,11 @@
         document.body.removeChild(tempInput);
 
         alert("인스타용 URL이 복사되었습니다!");
+      }
+
+      // 모바일 기기 체크 함수 추가
+      function isMobile() {
+        return window.innerWidth <= 850;
       }
     </script>
   </body>
